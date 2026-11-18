@@ -15,11 +15,44 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        User::updateOrCreate(
+            ['username' => 'operator'],
+            [
+                'name' => 'Operator Utama',
+                'email' => 'operator@bps.go.id',
+                'password' => 'operator123',
+                'role' => 'operator',
+                'is_active' => true,
+                'email_verified_at' => now(),
+            ]
+        );
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        User::updateOrCreate(
+            ['username' => 'admin'],
+            [
+                'name' => 'Admin Pengawasan',
+                'email' => 'admin@bps.go.id',
+                'password' => 'admin123',
+                'role' => 'admin',
+                'is_active' => true,
+                'email_verified_at' => now(),
+            ]
+        );
+
+        User::updateOrCreate(
+            ['username' => 'user'],
+            [
+                'name' => 'Pegawai Verifikator',
+                'email' => 'user@bps.go.id',
+                'password' => 'user123',
+                'role' => 'user',
+                'is_active' => true,
+                'email_verified_at' => now(),
+            ]
+        );
+
+        $this->call(SatkerSeeder::class);
+        $this->call(ListKelengkapanSeeder::class);
+        $this->call(CatatanPemeriksaSeeder::class);
     }
 }
