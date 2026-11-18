@@ -8,7 +8,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
-import { register } from '@/routes';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
 import PasskeyVerify from '@/components/PasskeyVerify.vue';
@@ -46,16 +45,16 @@ defineProps<{
     >
         <div class="grid gap-6">
             <div class="grid gap-2">
-                <Label for="email">Email address</Label>
+                <Label for="email">Email atau Username</Label>
                 <Input
                     id="email"
-                    type="email"
+                    type="text"
                     name="email"
                     required
                     v-focus
                     :tabindex="1"
-                    autocomplete="email"
-                    placeholder="email@example.com"
+                    autocomplete="username"
+                    placeholder="nama@email.com atau username"
                 />
                 <InputError :message="errors.email" />
             </div>
@@ -100,11 +99,6 @@ defineProps<{
                 <Spinner v-if="processing" />
                 Log in
             </Button>
-        </div>
-
-        <div class="text-center text-sm text-muted-foreground">
-            Don't have an account?
-            <TextLink :href="register()" :tabindex="5">Sign up</TextLink>
         </div>
     </Form>
 </template>

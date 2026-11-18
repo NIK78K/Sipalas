@@ -26,7 +26,10 @@ class UserFactory extends Factory
     {
         return [
             'name' => fake()->name(),
+            'username' => str_replace('.', '_', fake()->unique()->userName()),
             'email' => fake()->unique()->safeEmail(),
+            'role' => 'user',
+            'is_active' => true,
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
@@ -34,6 +37,36 @@ class UserFactory extends Factory
             'two_factor_recovery_codes' => null,
             'two_factor_confirmed_at' => null,
         ];
+    }
+
+    /**
+     * Indicate that the user is an operator.
+     */
+    public function operator(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'operator',
+        ]);
+    }
+
+    /**
+     * Indicate that the user is an admin.
+     */
+    public function admin(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'admin',
+        ]);
+    }
+
+    /**
+     * Indicate that the user is inactive.
+     */
+    public function inactive(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'is_active' => false,
+        ]);
     }
 
     /**
