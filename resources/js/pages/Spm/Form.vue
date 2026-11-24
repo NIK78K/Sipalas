@@ -208,8 +208,8 @@ function submit() {
                             required
                         >
                             <option value="LS">LS</option>
-                            <option value="GUP">GUP</option>
-                            <option value="PTUP">PTUP</option>
+                            <option value="GUP/PTUP">GUP/PTUP</option>
+                            <option value="UP/PTUP">UP/TUP</option>
                         </select>
                         <p v-if="form.errors.jenis" class="text-xs text-destructive">{{ form.errors.jenis }}</p>
                     </div>
@@ -268,12 +268,12 @@ function submit() {
                 </div>
 
                 <div class="space-y-1">
-                    <Label for="catatan_pemeriksa">Catatan Pemeriksa Resmi</Label>
+                    <Label for="catatan_pemeriksa">Uraian</Label>
                     <textarea
                         id="catatan_pemeriksa"
                         v-model="form.catatan_pemeriksa"
                         rows="3"
-                        placeholder="Contoh: Dokumen lengkap dan bertanda tangan."
+                        placeholder="Tulis uraian untuk SPM ini..."
                         class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-primary"
                     ></textarea>
                     <p v-if="form.errors.catatan_pemeriksa" class="text-xs text-destructive">{{ form.errors.catatan_pemeriksa }}</p>

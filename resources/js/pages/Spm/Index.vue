@@ -229,8 +229,8 @@ function exportExcel() {
                         >
                             <option value="">Semua Jenis SPM</option>
                             <option value="LS">LS</option>
-                            <option value="GUP">GUP</option>
-                            <option value="PTUP">PTUP</option>
+                            <option value="GUP/PTUP">GUP/PTUP</option>
+                            <option value="UP/PTUP">UP/PTUP</option>
                         </select>
                     </div>
                     <div>

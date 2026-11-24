@@ -379,7 +379,7 @@ function deleteCatatan(c: CatatanItem) {
                 <!-- Catatan Pemeriksa Resmi -->
                 <div class="pt-4 border-t space-y-2">
                     <Label for="catatan-pemeriksa" class="font-semibold text-sm">
-                        Catatan Resmi Pemeriksa (Operator / Admin)
+                        Uraian (Operator / Admin)
                     </Label>
                     <textarea
                         id="catatan-pemeriksa"
