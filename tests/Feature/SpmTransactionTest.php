@@ -242,22 +242,4 @@ class SpmTransactionTest extends TestCase
         $this->assertDatabaseMissing('spm_catatans', ['id' => $note->id]);
     }
 
-    public function test_satker_catatan_monitoring(): void
-    {
-        $user = User::factory()->create(['role' => 'user']);
-
-        // View index
-        $this->actingAs($user)->get(route('satker.catatan.index', ['satker_id' => $this->satker->id]))->assertOk();
-
-        // Add note
-        $this->actingAs($user)->post(route('satker.catatan.store', $this->satker), [
-            'tanggal' => '2026-02-01',
-            'isi' => 'Bulan Januari lengkap 100%.',
-        ])->assertRedirect();
-
-        $this->assertDatabaseHas('satker_catatans', [
-            'satker_id' => $this->satker->id,
-            'isi' => 'Bulan Januari lengkap 100%.',
-        ]);
-    }
 }

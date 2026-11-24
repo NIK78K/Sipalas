@@ -376,10 +376,10 @@ function deleteCatatan(c: CatatanItem) {
                     </table>
                 </div>
 
-                <!-- Catatan Pemeriksa Resmi -->
+                <!-- Uraian Belanja -->
                 <div class="pt-4 border-t space-y-2">
                     <Label for="catatan-pemeriksa" class="font-semibold text-sm">
-                        Uraian (Operator / Admin)
+                        Uraian Belanja (Operator / Admin)
                     </Label>
                     <textarea
                         id="catatan-pemeriksa"

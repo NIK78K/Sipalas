@@ -125,9 +125,5 @@ class CatatanPemeriksaImportTest extends TestCase
         $this->assertEquals(132090617, $spm->nilai_transaksi);
         $this->assertNotEmpty($spm->checklists);
 
-        // Verify MonPPSPM notes imported
-        $this->assertDatabaseHas('satker_catatans', [
-            'satker_id' => $satker->id,
-        ]);
     }
 }

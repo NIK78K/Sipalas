@@ -268,12 +268,12 @@ function submit() {
                 </div>
 
                 <div class="space-y-1">
-                    <Label for="catatan_pemeriksa">Uraian</Label>
+                    <Label for="catatan_pemeriksa">Uraian Belanja</Label>
                     <textarea
                         id="catatan_pemeriksa"
                         v-model="form.catatan_pemeriksa"
                         rows="3"
-                        placeholder="Tulis uraian untuk SPM ini..."
+                        placeholder="Tulis uraian belanja untuk SPM ini..."
                         class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-primary"
                     ></textarea>
                     <p v-if="form.errors.catatan_pemeriksa" class="text-xs text-destructive">{{ form.errors.catatan_pemeriksa }}</p>

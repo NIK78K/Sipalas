@@ -65,11 +65,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/spm/{spm}/catatan', [\App\Http\Controllers\SpmCatatanController::class, 'store'])->name('spm.catatan.store');
     Route::delete('/spm-catatan/{catatan}', [\App\Http\Controllers\SpmCatatanController::class, 'destroy'])->name('spm.catatan.destroy');
 
-    // Catatan Pengawasan Satker (MonPPSPM)
-    Route::get('/catatan-satker', [\App\Http\Controllers\SatkerCatatanController::class, 'index'])->name('satker.catatan.index');
-    Route::post('/satker/{satker}/catatan', [\App\Http\Controllers\SatkerCatatanController::class, 'store'])->name('satker.catatan.store');
-    Route::delete('/catatan-satker/{catatan}', [\App\Http\Controllers\SatkerCatatanController::class, 'destroy'])->name('satker.catatan.destroy');
-
     // Impor Data Excel (FR-25, FR-26) & Log Aktivitas (FR-29)
     Route::middleware('role:operator,admin')->group(function () {
         Route::get('/impor', [\App\Http\Controllers\ImportController::class, 'index'])->name('impor.index');

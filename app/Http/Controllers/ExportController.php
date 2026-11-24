@@ -54,7 +54,7 @@ class ExportController extends Controller
         $headers = [
             'No', 'Satker', 'Tahun', 'Bulan', 'No SPM', 'Jenis',
             'Akun Belanja', 'Nilai Transaksi (Rp)', 'Status', 'Progres',
-            'Uraian', 'Link Bukti Dukung',
+            'Uraian Belanja', 'Link Bukti Dukung',
         ];
 
         $col = 'A';

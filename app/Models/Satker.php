@@ -20,8 +20,4 @@ class Satker extends Model
         return $this->hasMany(Spm::class);
     }
 
-    public function catatans(): HasMany
-    {
-        return $this->hasMany(SatkerCatatan::class)->latest('tanggal');
-    }
 }

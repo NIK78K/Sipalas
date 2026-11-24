@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
-import { BookOpen, FolderGit2, LayoutGrid, Users, Building2, FileSpreadsheet, FileCheck, StickyNote, BarChart3, UploadCloud, ShieldCheck } from '@lucide/vue';
+import { BookOpen, FolderGit2, LayoutGrid, Users, Building2, FileSpreadsheet, FileCheck, BarChart3, UploadCloud, ShieldCheck } from '@lucide/vue';
 import AppLogo from '@/components/AppLogo.vue';
 import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
@@ -37,11 +37,6 @@ const mainNavItems = computed<NavItem[]>(() => {
             title: 'List Kelengkapan',
             href: '/kelengkapan',
             icon: BarChart3,
-        },
-        {
-            title: 'Catatan Satker',
-            href: '/catatan-satker',
-            icon: StickyNote,
         },
     ];
 

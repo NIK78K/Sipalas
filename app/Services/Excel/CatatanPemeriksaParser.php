@@ -5,7 +5,6 @@ namespace App\Services\Excel;
 use App\Models\AkunBelanja;
 use App\Models\ImportLog;
 use App\Models\Satker;
-use App\Models\SatkerCatatan;
 use App\Models\Spm;
 use App\Models\SpmChecklist;
 use Illuminate\Support\Facades\DB;
@@ -49,7 +48,7 @@ class CatatanPemeriksaParser
 
         // 2. Process each satker sheet individually (memory-efficient)
         foreach ($sheetNames as $sheetName) {
-            if ($sheetName === 'Catatan MonPPSPM' || $sheetName === 'kosong') {
+            if ($sheetName === 'kosong') {
                 continue;
             }
 
@@ -242,43 +241,6 @@ class CatatanPemeriksaParser
             // Clean memory between sheets
             $spreadsheet->disconnectWorksheets();
             unset($spreadsheet);
-            gc_collect_cycles();
-        }
-
-        // 3. Process Catatan MonPPSPM Sheet
-        if (in_array('Catatan MonPPSPM', $sheetNames, true)) {
-            $reader->setLoadSheetsOnly(['Catatan MonPPSPM']);
-            $monSpreadsheet = $reader->load($filePath);
-            $monSheet = $monSpreadsheet->getActiveSheet();
-            $maxMonRow = min($monSheet->getHighestRow(), 30);
-
-            for ($mr = 2; $mr <= $maxMonRow; $mr++) {
-                foreach ([1, 5] as $col) {
-                    $satkerCell = $monSheet->getCell([$col, $mr])->getValue();
-                    $noteCell = $monSheet->getCell([$col + 2, $mr])->getValue();
-
-                    if ($satkerCell && $noteCell && preg_match('/\[(\d{4})\]/', strval($satkerCell), $sMatches)) {
-                        $satkerKode = $sMatches[1];
-                        $targetSatker = $satkers->get($satkerKode);
-
-                        if ($targetSatker) {
-                            SatkerCatatan::updateOrCreate(
-                                [
-                                    'satker_id' => $targetSatker->id,
-                                    'tanggal' => '2026-11-03',
-                                ],
-                                [
-                                    'user_id' => $importLog?->user_id,
-                                    'isi' => trim(strval($noteCell)),
-                                ]
-                            );
-                        }
-                    }
-                }
-            }
-
-            $monSpreadsheet->disconnectWorksheets();
-            unset($monSpreadsheet);
             gc_collect_cycles();
         }
 

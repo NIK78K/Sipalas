@@ -55,14 +55,6 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('satker_catatans', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('satker_id')->constrained('satkers')->cascadeOnDelete();
-            $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
-            $table->date('tanggal');
-            $table->text('isi');
-            $table->timestamps();
-        });
     }
 
     /**
@@ -70,7 +62,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('satker_catatans');
         Schema::dropIfExists('spm_catatans');
         Schema::dropIfExists('spm_checklists');
         Schema::dropIfExists('spms');
