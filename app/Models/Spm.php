@@ -63,7 +63,9 @@ class Spm extends Model
 
     public function catatans(): HasMany
     {
-        return $this->hasMany(SpmCatatan::class)->latest();
+        return $this->hasMany(SpmCatatan::class)
+            ->whereNull('parent_id')
+            ->oldest();
     }
 
     public function creator(): BelongsTo

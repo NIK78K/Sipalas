@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Auth;
 
 class SpmCatatan extends Model
@@ -14,6 +15,7 @@ class SpmCatatan extends Model
     protected $fillable = [
         'spm_id',
         'user_id',
+        'parent_id',
         'isi',
     ];
 
@@ -29,6 +31,16 @@ class SpmCatatan extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(SpmCatatan::class, 'parent_id');
+    }
+
+    public function replies(): HasMany
+    {
+        return $this->hasMany(SpmCatatan::class, 'parent_id')->oldest();
     }
 
     public function canDeleteBy(?User $user): bool

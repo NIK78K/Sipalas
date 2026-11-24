@@ -242,4 +242,37 @@ class SpmTransactionTest extends TestCase
         $this->assertDatabaseMissing('spm_catatans', ['id' => $note->id]);
     }
 
+    public function test_users_can_reply_to_additional_notes(): void
+    {
+        $user = User::factory()->create(['role' => 'user']);
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $spm = Spm::create([
+            'satker_id' => $this->satker->id,
+            'akun_belanja_id' => $this->akun->id,
+            'tahun' => 2026,
+            'bulan' => 1,
+            'nomor' => '00002A',
+            'jenis' => 'LS',
+            'nilai_transaksi' => 1000000,
+        ]);
+
+        $this->actingAs($user)->post(route('spm.catatan.store', $spm), [
+            'isi' => 'Dokumen A dan B sudah diperiksa.',
+        ])->assertRedirect();
+
+        $note = SpmCatatan::where('spm_id', $spm->id)->firstOrFail();
+
+        $this->actingAs($admin)->post(route('spm.catatan.store', $spm), [
+            'isi' => 'Diterima, terima kasih.',
+            'parent_id' => $note->id,
+        ])->assertRedirect();
+
+        $reply = SpmCatatan::where('parent_id', $note->id)->firstOrFail();
+        $this->assertEquals($admin->id, $reply->user_id);
+        $this->assertEquals($note->id, $reply->parent_id);
+        $this->assertEquals(1, $spm->catatans()->count());
+        $this->assertEquals(1, $note->replies()->count());
+    }
+
 }

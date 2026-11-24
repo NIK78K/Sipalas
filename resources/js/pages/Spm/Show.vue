@@ -43,9 +43,11 @@ interface ChecklistItem {
 interface CatatanItem {
     id: number;
     user_id: number;
+    parent_id: number | null;
     isi: string;
     can_delete: boolean;
     created_at: string;
+    replies?: CatatanItem[];
     user?: {
         name: string;
         username: string;
@@ -173,13 +175,28 @@ const progressPercent = computed(() => {
 // Form Catatan Tambahan
 const catatanForm = useForm({
     isi: '',
+    parent_id: null as number | null,
 });
+
+const replyingTo = ref<CatatanItem | null>(null);
+
+function startReply(c: CatatanItem) {
+    replyingTo.value = c;
+    catatanForm.parent_id = c.id;
+}
+
+function cancelReply() {
+    replyingTo.value = null;
+    catatanForm.parent_id = null;
+    catatanForm.isi = '';
+}
 
 function submitCatatan() {
     catatanForm.post(`/spm/${props.spm.id}/catatan`, {
         preserveScroll: true,
         onSuccess: () => {
             catatanForm.reset();
+            replyingTo.value = null;
         },
     });
 }
@@ -428,6 +445,12 @@ function deleteCatatan(c: CatatanItem) {
                                 <Badge variant="outline" class="text-[10px] uppercase font-mono">
                                     {{ c.user?.role }}
                                 </Badge>
+                                <Badge :variant="c.parent_id ? 'secondary' : 'default'" class="text-[10px]">
+                                    {{ c.parent_id
+                                        ? `Balasan ${c.user?.role === 'admin' ? 'admin' : c.user?.role === 'operator' ? 'operator' : 'pengguna'}`
+                                        : 'Catatan baru'
+                                    }}
+                                </Badge>
                             </div>
                             <div class="flex items-center gap-2 text-muted-foreground">
                                 <Clock class="h-3 w-3" />
@@ -445,12 +468,67 @@ function deleteCatatan(c: CatatanItem) {
                             </div>
                         </div>
                         <p class="text-sm whitespace-pre-line text-foreground">{{ c.isi }}</p>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            class="h-7 px-2 text-xs"
+                            @click="startReply(c)"
+                        >
+                            <MessageSquare class="mr-1 h-3.5 w-3.5" />
+                            Balas
+                        </Button>
+
+                        <div v-if="c.replies?.length" class="mt-3 space-y-2 border-l-2 border-primary/40 pl-4">
+                            <div
+                                v-for="reply in c.replies"
+                                :key="reply.id"
+                                class="rounded-md border bg-background p-3 space-y-1.5"
+                            >
+                                <div class="flex items-center justify-between text-xs">
+                                    <div class="flex items-center gap-1.5">
+                                        <UserCircle class="h-4 w-4 text-muted-foreground" />
+                                        <span class="font-semibold">{{ reply.user?.name }}</span>
+                                        <Badge variant="outline" class="text-[10px] uppercase font-mono">
+                                            {{ reply.user?.role }}
+                                        </Badge>
+                                        <Badge variant="secondary" class="text-[10px]">
+                                            Balasan {{ reply.user?.role === 'admin' ? 'admin' : reply.user?.role === 'operator' ? 'operator' : 'pengguna' }}
+                                        </Badge>
+                                    </div>
+                                    <div class="flex items-center gap-2 text-muted-foreground">
+                                        <Clock class="h-3 w-3" />
+                                        <span>{{ new Date(reply.created_at).toLocaleString('id-ID') }}</span>
+                                        <Button
+                                            v-if="reply.can_delete"
+                                            variant="ghost"
+                                            size="sm"
+                                            class="h-6 w-6 p-0 text-destructive hover:bg-destructive/10"
+                                            title="Hapus balasan"
+                                            @click="deleteCatatan(reply)"
+                                        >
+                                            <Trash2 class="h-3.5 w-3.5" />
+                                        </Button>
+                                    </div>
+                                </div>
+                                <p class="text-sm whitespace-pre-line text-foreground">{{ reply.isi }}</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Add Note Form -->
                 <form @submit.prevent="submitCatatan" class="pt-3 border-t space-y-2">
-                    <Label for="catatan-baru" class="text-xs font-semibold">Tambah Catatan</Label>
+                    <div v-if="replyingTo" class="flex items-center justify-between rounded-md bg-primary/10 px-3 py-2 text-xs">
+                        <span>
+                            Membalas catatan <strong>{{ replyingTo.user?.name }}</strong>
+                        </span>
+                        <Button type="button" variant="ghost" size="sm" class="h-6" @click="cancelReply">
+                            Batal balas
+                        </Button>
+                    </div>
+                    <Label for="catatan-baru" class="text-xs font-semibold">
+                        {{ replyingTo ? 'Tulis Balasan' : 'Tambah Catatan' }}
+                    </Label>
                     <div class="flex gap-2">
                         <textarea
                             id="catatan-baru"
@@ -462,7 +540,7 @@ function deleteCatatan(c: CatatanItem) {
                         ></textarea>
                         <Button type="submit" class="self-end" :disabled="catatanForm.processing || !catatanForm.isi">
                             <Send class="h-4 w-4 mr-1" />
-                            Kirim
+                            {{ replyingTo ? 'Kirim Balasan' : 'Kirim' }}
                         </Button>
                     </div>
                     <p v-if="catatanForm.errors.isi" class="text-xs text-destructive">{{ catatanForm.errors.isi }}</p>

@@ -139,6 +139,7 @@ class SpmController extends Controller
                 $q->orderBy('urutan');
             },
             'catatans.user',
+            'catatans.replies.user',
             'creator',
             'updater',
         ]);

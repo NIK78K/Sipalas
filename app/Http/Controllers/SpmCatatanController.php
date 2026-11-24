@@ -16,10 +16,16 @@ class SpmCatatanController extends Controller
 
         $validated = $request->validate([
             'isi' => ['required', 'string', 'max:5000'],
+            'parent_id' => [
+                'nullable',
+                'integer',
+                \Illuminate\Validation\Rule::exists('spm_catatans', 'id')->where('spm_id', $spm->id),
+            ],
         ]);
 
         $spm->catatans()->create([
             'user_id' => $request->user()?->id,
+            'parent_id' => $validated['parent_id'] ?? null,
             'isi' => $validated['isi'],
         ]);
 
