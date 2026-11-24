@@ -158,9 +158,10 @@ class RekapKelengkapanService
 
         $docs = $akun->activeDokumenWajibs()->get();
 
-        $documents = $docs->map(function (DokumenWajib $doc) use ($spms, $totalSpm) {
+        $documents = $docs->map(function (DokumenWajib $doc) use ($docs, $spms, $totalSpm) {
             $fulfilled = 0;
             $missingSpms = [];
+            $detailSpms = [];
 
             foreach ($spms as $spm) {
                 $chk = $spm->checklists->firstWhere('dokumen_wajib_id', $doc->id);
@@ -178,6 +179,25 @@ class RekapKelengkapanService
                         'nilai_transaksi' => $spm->nilai_transaksi,
                     ];
                 }
+
+                $detailSpms[] = [
+                    'id' => $spm->id,
+                    'nomor' => $spm->nomor,
+                    'satker_kode' => $spm->satker?->kode,
+                    'satker_nama' => $spm->satker?->nama,
+                    'tahun' => $spm->tahun,
+                    'bulan' => $spm->bulan,
+                    'jenis' => $spm->jenis,
+                    'nilai_transaksi' => $spm->nilai_transaksi,
+                    'uraian_belanja' => $spm->catatan_pemeriksa,
+                    'link_bukti' => $spm->link_bukti,
+                    'is_checked' => (bool) ($chk?->is_checked),
+                    'document_statuses' => $docs->mapWithKeys(function (DokumenWajib $item) use ($spm) {
+                        $itemChecklist = $spm->checklists->firstWhere('dokumen_wajib_id', $item->id);
+
+                        return [$item->id => (bool) ($itemChecklist?->is_checked)];
+                    })->all(),
+                ];
             }
 
             $percent = $totalSpm > 0 ? round(($fulfilled / $totalSpm) * 100, 1) : 0;
@@ -190,6 +210,7 @@ class RekapKelengkapanService
                 'unfulfilled_count' => $totalSpm - $fulfilled,
                 'percent' => $percent,
                 'missing_spms' => $missingSpms,
+                'detail_spms' => $detailSpms,
             ];
         });
 

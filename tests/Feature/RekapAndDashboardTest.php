@@ -151,6 +151,10 @@ class RekapAndDashboardTest extends TestCase
         $this->assertEquals(2, $doc1Detail['fulfilled_count']);
         $this->assertEquals(100.0, $doc1Detail['percent']);
         $this->assertEmpty($doc1Detail['missing_spms']);
+        $this->assertCount(2, $doc1Detail['detail_spms']);
+        $this->assertEquals('00001A', $doc1Detail['detail_spms'][0]['nomor']);
+        $this->assertTrue($doc1Detail['detail_spms'][0]['is_checked']);
+        $this->assertTrue($doc1Detail['detail_spms'][0]['document_statuses'][$this->doc1->id]);
 
         // doc2 (Undangan): fulfilled by SPM1 only (1/2 = 50%)
         $doc2Detail = $detail['documents']->firstWhere('id', $this->doc2->id);
