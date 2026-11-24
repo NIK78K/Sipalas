@@ -35,7 +35,9 @@ class SatkerController extends Controller
     {
         $validated = $request->validate([
             'kode' => ['required', 'string', 'max:10', Rule::unique(Satker::class)],
-            'nama' => ['required', 'string', 'max:255'],
+            'nama' => ['required', 'string', 'max:255', Rule::unique(Satker::class)],
+        ], [
+            'nama.unique' => 'Nama satker sudah terdaftar.',
         ]);
 
         Satker::create($validated);
@@ -47,7 +49,9 @@ class SatkerController extends Controller
     {
         $validated = $request->validate([
             'kode' => ['required', 'string', 'max:10', Rule::unique(Satker::class)->ignore($satker->id)],
-            'nama' => ['required', 'string', 'max:255'],
+            'nama' => ['required', 'string', 'max:255', Rule::unique(Satker::class)->ignore($satker->id)],
+        ], [
+            'nama.unique' => 'Nama satker sudah terdaftar.',
         ]);
 
         $satker->update($validated);

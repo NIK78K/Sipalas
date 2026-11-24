@@ -63,6 +63,23 @@ class MasterDataTest extends TestCase
         $this->assertDatabaseMissing('satkers', ['kode' => '1499']);
     }
 
+    public function test_satker_name_must_be_unique(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        Satker::create(['kode' => '1401', 'nama' => 'Kab. Kuantan Singingi']);
+
+        $this->actingAs($admin)
+            ->from(route('master.satker.index'))
+            ->post(route('master.satker.store'), [
+                'kode' => '1402',
+                'nama' => 'Kab. Kuantan Singingi',
+            ])
+            ->assertRedirect(route('master.satker.index'))
+            ->assertSessionHasErrors([
+                'nama' => 'Nama satker sudah terdaftar.',
+            ]);
+    }
+
     public function test_admin_can_crud_akun_belanja(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
