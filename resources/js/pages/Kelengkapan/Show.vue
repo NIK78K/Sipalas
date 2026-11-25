@@ -27,7 +27,7 @@ interface DetailSpm extends MissingSpm {
     uraian_belanja: string | null;
     link_bukti: string | null;
     is_checked: boolean;
-    document_statuses: Record<number, boolean>;
+    document_statuses: Record<number, 'sesuai' | 'tidak_sesuai' | '-' | null>;
 }
 
 interface DocumentDetail {
@@ -66,8 +66,19 @@ const props = defineProps<{
 }>();
 
 const months = [
-    '', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+    '',
+    'Januari',
+    'Februari',
+    'Maret',
+    'April',
+    'Mei',
+    'Juni',
+    'Juli',
+    'Agustus',
+    'September',
+    'Oktober',
+    'November',
+    'Desember',
 ];
 
 const detailSpms = computed(() => props.documents[0]?.detail_spms ?? []);
@@ -90,23 +101,32 @@ function formatRupiah(val: number): string {
     >
         <Head :title="`Detail Rekap - ${account.nama}`" />
 
-        <div class="flex flex-col gap-6 p-6 max-w-6xl mx-auto w-full">
+        <div class="mx-auto flex w-full max-w-6xl flex-col gap-6 p-6">
             <!-- Header -->
-            <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+            <div
+                class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center"
+            >
                 <div class="flex items-center gap-3">
                     <Button as-child variant="outline" size="sm">
-                        <Link :href="`/kelengkapan?satker_id=${filters.satker_id}&tahun=${filters.tahun}&bulan=${filters.bulan}`">
-                            <ArrowLeft class="h-4 w-4 mr-1" />
+                        <Link
+                            :href="`/kelengkapan?satker_id=${filters.satker_id}&tahun=${filters.tahun}&bulan=${filters.bulan}`"
+                        >
+                            <ArrowLeft class="mr-1 h-4 w-4" />
                             Kembali
                         </Link>
                     </Button>
                     <div>
                         <div class="flex items-center gap-2">
-                            <h1 class="text-2xl font-bold tracking-tight">{{ account.nama }}</h1>
-                            <Badge variant="outline" class="font-mono">{{ account.kode }}</Badge>
+                            <h1 class="text-2xl font-bold tracking-tight">
+                                {{ account.nama }}
+                            </h1>
+                            <Badge variant="outline" class="font-mono">{{
+                                account.kode
+                            }}</Badge>
                         </div>
                         <p class="text-sm text-muted-foreground">
-                            Detail pemenuhan tiap dokumen wajib untuk akun belanja ini (Total {{ total_spm }} SPM terdata).
+                            Detail pemenuhan tiap dokumen wajib untuk akun
+                            belanja ini (Total {{ total_spm }} SPM terdata).
                         </p>
                     </div>
                 </div>
@@ -115,14 +135,40 @@ function formatRupiah(val: number): string {
             <!-- SPM Detail Table -->
             <div class="overflow-x-auto rounded-lg border bg-card shadow-sm">
                 <table class="w-full min-w-max text-left text-xs">
-                    <thead class="border-b bg-muted/40 text-[10px] uppercase text-muted-foreground">
+                    <thead
+                        class="border-b bg-muted/40 text-[10px] text-muted-foreground uppercase"
+                    >
                         <tr>
-                            <th class="sticky left-0 z-10 w-48 px-3 py-3 border-r border-border bg-muted/40">Uraian Belanja</th>
-                            <th class="sticky left-48 z-10 w-24 px-3 py-3 border-r border-border bg-muted/40">Kode Akun</th>
-                            <th class="sticky left-[288px] z-10 w-28 px-3 py-3 text-right border-r border-border bg-muted/40">Nilai</th>
-                            <th class="sticky left-[400px] z-10 w-24 px-3 py-3 border-r border-border bg-muted/40">Jenis</th>
-                            <th class="sticky left-[496px] z-10 w-28 px-3 py-3 border-r border-border bg-muted/40">No SPM</th>
-                            <th class="sticky left-[608px] z-10 w-20 px-3 py-3 border-r-2 border-border bg-muted/40">Link</th>
+                            <th
+                                class="sticky left-0 z-10 w-48 border-r border-border bg-muted/40 px-3 py-3"
+                            >
+                                Uraian Belanja
+                            </th>
+                            <th
+                                class="sticky left-48 z-10 w-24 border-r border-border bg-muted/40 px-3 py-3"
+                            >
+                                Kode Akun
+                            </th>
+                            <th
+                                class="sticky left-[288px] z-10 w-28 border-r border-border bg-muted/40 px-3 py-3 text-right"
+                            >
+                                Nilai
+                            </th>
+                            <th
+                                class="sticky left-[400px] z-10 w-24 border-r border-border bg-muted/40 px-3 py-3"
+                            >
+                                Jenis
+                            </th>
+                            <th
+                                class="sticky left-[496px] z-10 w-28 border-r border-border bg-muted/40 px-3 py-3"
+                            >
+                                No SPM
+                            </th>
+                            <th
+                                class="sticky left-[608px] z-10 w-20 border-r-2 border-border bg-muted/40 px-3 py-3"
+                            >
+                                Link
+                            </th>
                             <th
                                 v-for="document in documents"
                                 :key="document.id"
@@ -134,23 +180,53 @@ function formatRupiah(val: number): string {
                     </thead>
                     <tbody class="divide-y">
                         <tr v-if="detailSpms.length === 0">
-                            <td :colspan="6 + documents.length" class="px-4 py-8 text-center text-muted-foreground">
+                            <td
+                                :colspan="6 + documents.length"
+                                class="px-4 py-8 text-center text-muted-foreground"
+                            >
                                 Belum ada SPM untuk filter ini.
                             </td>
                         </tr>
-                        <tr v-for="mspm in detailSpms" :key="mspm.id" class="hover:bg-muted/20">
-                            <td class="sticky left-0 z-10 w-48 px-3 py-3 border-r border-border bg-card align-top">
-                                <p class="whitespace-pre-line">{{ mspm.uraian_belanja || '-' }}</p>
+                        <tr
+                            v-for="mspm in detailSpms"
+                            :key="mspm.id"
+                            class="hover:bg-muted/20"
+                        >
+                            <td
+                                class="sticky left-0 z-10 w-48 border-r border-border bg-card px-3 py-3 align-top"
+                            >
+                                <p class="whitespace-pre-line">
+                                    {{ mspm.uraian_belanja || '-' }}
+                                </p>
                             </td>
-                            <td class="sticky left-48 z-10 w-24 px-3 py-3 border-r border-border bg-card font-mono align-top">{{ account.kode }}</td>
-                            <td class="sticky left-[288px] z-10 w-28 px-3 py-3 text-right border-r border-border bg-card font-mono align-top">{{ formatRupiah(mspm.nilai_transaksi) }}</td>
-                            <td class="sticky left-[400px] z-10 w-24 px-3 py-3 border-r border-border bg-card align-top">{{ mspm.jenis }}</td>
-                            <td class="sticky left-[496px] z-10 w-28 px-3 py-3 border-r border-border bg-card align-top">
-                                <Link :href="`/spm/${mspm.id}`" class="font-mono font-bold text-primary hover:underline">
+                            <td
+                                class="sticky left-48 z-10 w-24 border-r border-border bg-card px-3 py-3 align-top font-mono"
+                            >
+                                {{ account.kode }}
+                            </td>
+                            <td
+                                class="sticky left-[288px] z-10 w-28 border-r border-border bg-card px-3 py-3 text-right align-top font-mono"
+                            >
+                                {{ formatRupiah(mspm.nilai_transaksi) }}
+                            </td>
+                            <td
+                                class="sticky left-[400px] z-10 w-24 border-r border-border bg-card px-3 py-3 align-top"
+                            >
+                                {{ mspm.jenis }}
+                            </td>
+                            <td
+                                class="sticky left-[496px] z-10 w-28 border-r border-border bg-card px-3 py-3 align-top"
+                            >
+                                <Link
+                                    :href="`/spm/${mspm.id}`"
+                                    class="font-mono font-bold text-primary hover:underline"
+                                >
                                     {{ mspm.nomor }}
                                 </Link>
                             </td>
-                            <td class="sticky left-[608px] z-10 w-20 px-3 py-3 border-r-2 border-border bg-card align-top">
+                            <td
+                                class="sticky left-[608px] z-10 w-20 border-r-2 border-border bg-card px-3 py-3 align-top"
+                            >
                                 <a
                                     v-if="mspm.link_bukti"
                                     :href="mspm.link_bukti"
@@ -161,7 +237,9 @@ function formatRupiah(val: number): string {
                                     Bukti
                                     <ExternalLink class="h-3 w-3" />
                                 </a>
-                                <span v-else class="text-muted-foreground">-</span>
+                                <span v-else class="text-muted-foreground"
+                                    >-</span
+                                >
                             </td>
                             <td
                                 v-for="document in documents"
@@ -169,10 +247,36 @@ function formatRupiah(val: number): string {
                                 class="min-w-28 px-3 py-3 text-center align-top"
                             >
                                 <Badge
-                                    :variant="mspm.document_statuses[document.id] ? 'default' : 'secondary'"
+                                    :variant="
+                                        mspm.document_statuses[document.id] ===
+                                        'sesuai'
+                                            ? 'default'
+                                            : mspm.document_statuses[
+                                                    document.id
+                                                ] === 'tidak_sesuai'
+                                              ? 'destructive'
+                                              : mspm.document_statuses[
+                                                      document.id
+                                                  ] === '-'
+                                                ? 'outline'
+                                                : 'secondary'
+                                    "
                                     class="text-[10px]"
                                 >
-                                    {{ mspm.document_statuses[document.id] ? 'Sesuai' : 'Belum Sesuai' }}
+                                    {{
+                                        mspm.document_statuses[document.id] ===
+                                        'sesuai'
+                                            ? 'Sesuai'
+                                            : mspm.document_statuses[
+                                                    document.id
+                                                ] === 'tidak_sesuai'
+                                              ? 'Tidak Sesuai'
+                                              : mspm.document_statuses[
+                                                      document.id
+                                                  ] === '-'
+                                                ? '-'
+                                                : 'Belum Dinilai'
+                                    }}
                                 </Badge>
                             </td>
                         </tr>

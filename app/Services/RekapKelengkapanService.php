@@ -158,16 +158,24 @@ class RekapKelengkapanService
 
         $docs = $akun->activeDokumenWajibs()->get();
 
-        $documents = $docs->map(function (DokumenWajib $doc) use ($docs, $spms, $totalSpm) {
+        $documents = $docs->map(function (DokumenWajib $doc) use ($docs, $spms) {
             $fulfilled = 0;
+            $applicable = 0;
             $missingSpms = [];
             $detailSpms = [];
 
             foreach ($spms as $spm) {
                 $chk = $spm->checklists->firstWhere('dokumen_wajib_id', $doc->id);
-                if ($chk && $chk->is_checked) {
-                    $fulfilled++;
+                if ($chk?->status === '-') {
+                    $isChecked = false;
                 } else {
+                    $applicable++;
+                    $isChecked = $chk?->status === 'sesuai';
+                }
+
+                if ($isChecked) {
+                    $fulfilled++;
+                } elseif ($chk?->status !== '-') {
                     $missingSpms[] = [
                         'id' => $spm->id,
                         'nomor' => $spm->nomor,
@@ -191,23 +199,23 @@ class RekapKelengkapanService
                     'nilai_transaksi' => $spm->nilai_transaksi,
                     'uraian_belanja' => $spm->catatan_pemeriksa,
                     'link_bukti' => $spm->link_bukti,
-                    'is_checked' => (bool) ($chk?->is_checked),
+                    'is_checked' => $isChecked,
                     'document_statuses' => $docs->mapWithKeys(function (DokumenWajib $item) use ($spm) {
                         $itemChecklist = $spm->checklists->firstWhere('dokumen_wajib_id', $item->id);
 
-                        return [$item->id => (bool) ($itemChecklist?->is_checked)];
+                        return [$item->id => $itemChecklist?->status];
                     })->all(),
                 ];
             }
 
-            $percent = $totalSpm > 0 ? round(($fulfilled / $totalSpm) * 100, 1) : 0;
+            $percent = $applicable > 0 ? round(($fulfilled / $applicable) * 100, 1) : 0;
 
             return [
                 'id' => $doc->id,
                 'urutan' => $doc->urutan,
                 'nama' => $doc->nama,
                 'fulfilled_count' => $fulfilled,
-                'unfulfilled_count' => $totalSpm - $fulfilled,
+                'unfulfilled_count' => $applicable - $fulfilled,
                 'percent' => $percent,
                 'missing_spms' => $missingSpms,
                 'detail_spms' => $detailSpms,

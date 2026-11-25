@@ -64,7 +64,7 @@ class RekapAndDashboardTest extends TestCase
             'nilai_transaksi' => 3000000,
         ]);
         $spm1->syncChecklists();
-        $spm1->checklists()->update(['is_checked' => true]);
+        $spm1->checklists()->update(['status' => 'sesuai', 'is_checked' => true]);
 
         // SPM 2 (Satker 2): Kurang (only doc1 checked)
         $spm2 = Spm::create([
@@ -77,7 +77,7 @@ class RekapAndDashboardTest extends TestCase
             'nilai_transaksi' => 2000000,
         ]);
         $spm2->syncChecklists();
-        $spm2->checklists()->where('dokumen_wajib_id', $this->doc1->id)->update(['is_checked' => true]);
+        $spm2->checklists()->where('dokumen_wajib_id', $this->doc1->id)->update(['status' => 'sesuai', 'is_checked' => true]);
 
         $response = $this->actingAs($user)->get(route('dashboard'));
         $response->assertOk();
@@ -118,7 +118,7 @@ class RekapAndDashboardTest extends TestCase
             'nilai_transaksi' => 1000000,
         ]);
         $spm1->syncChecklists();
-        $spm1->checklists()->update(['is_checked' => true]);
+        $spm1->checklists()->update(['status' => 'sesuai', 'is_checked' => true]);
 
         // SPM 2: doc1 checked, doc2 UNCHECKED
         $spm2 = Spm::create([
@@ -131,7 +131,7 @@ class RekapAndDashboardTest extends TestCase
             'nilai_transaksi' => 1500000,
         ]);
         $spm2->syncChecklists();
-        $spm2->checklists()->where('dokumen_wajib_id', $this->doc1->id)->update(['is_checked' => true]);
+        $spm2->checklists()->where('dokumen_wajib_id', $this->doc1->id)->update(['status' => 'sesuai', 'is_checked' => true]);
 
         // 1. Index page
         $this->actingAs($user)->get(route('kelengkapan.index'))->assertOk();
@@ -154,7 +154,7 @@ class RekapAndDashboardTest extends TestCase
         $this->assertCount(2, $doc1Detail['detail_spms']);
         $this->assertEquals('00001A', $doc1Detail['detail_spms'][0]['nomor']);
         $this->assertTrue($doc1Detail['detail_spms'][0]['is_checked']);
-        $this->assertTrue($doc1Detail['detail_spms'][0]['document_statuses'][$this->doc1->id]);
+        $this->assertSame('sesuai', $doc1Detail['detail_spms'][0]['document_statuses'][$this->doc1->id]);
 
         // doc2 (Undangan): fulfilled by SPM1 only (1/2 = 50%)
         $doc2Detail = $detail['documents']->firstWhere('id', $this->doc2->id);
@@ -162,6 +162,31 @@ class RekapAndDashboardTest extends TestCase
         $this->assertEquals(50.0, $doc2Detail['percent']);
         $this->assertCount(1, $doc2Detail['missing_spms']);
         $this->assertEquals('00002A', $doc2Detail['missing_spms'][0]['nomor']);
+    }
+
+    public function test_not_applicable_document_is_excluded_from_document_recap(): void
+    {
+        $spm = Spm::create([
+            'satker_id' => $this->satker1->id,
+            'akun_belanja_id' => $this->akun->id,
+            'tahun' => 2026,
+            'bulan' => 1,
+            'nomor' => '00003A',
+            'jenis' => 'LS',
+            'nilai_transaksi' => 1000000,
+        ]);
+        $spm->syncChecklists();
+        $spm->checklists()->where('dokumen_wajib_id', $this->doc1->id)->update(['status' => '-']);
+        $spm->checklists()->where('dokumen_wajib_id', $this->doc2->id)->update(['status' => 'sesuai']);
+
+        $detail = (new RekapKelengkapanService())->getAkunDetail($this->akun, null, 2026, 1);
+        $doc1 = $detail['documents']->firstWhere('id', $this->doc1->id);
+
+        $this->assertEquals(0, $doc1['fulfilled_count']);
+        $this->assertEquals(0, $doc1['unfulfilled_count']);
+        $this->assertEquals(0, $doc1['percent']);
+        $this->assertEmpty($doc1['missing_spms']);
+        $this->assertSame('-', $doc1['detail_spms'][0]['document_statuses'][$this->doc1->id]);
     }
 
     public function test_excel_export_endpoints(): void

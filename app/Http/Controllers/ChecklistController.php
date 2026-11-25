@@ -9,6 +9,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class ChecklistController extends Controller
 {
@@ -21,8 +23,8 @@ class ChecklistController extends Controller
 
         $validated = $request->validate([
             'version' => ['required', 'integer'],
-            'checked_ids' => ['present', 'array'],
-            'checked_ids.*' => ['integer', 'exists:dokumen_wajibs,id'],
+            'statuses' => ['required', 'array'],
+            'statuses.*' => ['nullable', Rule::in(['sesuai', 'tidak_sesuai', '-'])],
             'catatan_pemeriksa' => ['nullable', 'string'],
         ]);
 
@@ -34,22 +36,35 @@ class ChecklistController extends Controller
         }
 
         $userId = $request->user()?->id;
-        $checkedDocIds = array_map('intval', $validated['checked_ids']);
+        $statuses = $validated['statuses'];
 
-        DB::transaction(function () use ($spm, $checkedDocIds, $validated, $userId) {
+        DB::transaction(function () use ($spm, $statuses, $validated, $userId) {
             // Ensure all active documents for this account exist in spm_checklists
             $spm->syncChecklists();
 
             $allChecklists = $spm->checklists()->get();
+            $allowedIds = $allChecklists->pluck('dokumen_wajib_id')->map(fn ($id) => (int) $id)->all();
+            $submittedIds = array_map('intval', array_keys($statuses));
+
+            if (array_diff($submittedIds, $allowedIds)) {
+                throw ValidationException::withMessages([
+                    'statuses' => 'Status dokumen tidak sesuai dengan checklist SPM ini.',
+                ]);
+            }
 
             foreach ($allChecklists as $chk) {
-                $shouldBeChecked = in_array((int) $chk->dokumen_wajib_id, $checkedDocIds, true);
+                $key = (string) $chk->dokumen_wajib_id;
+                if (! array_key_exists($key, $statuses)) {
+                    continue;
+                }
 
-                if ($chk->is_checked !== $shouldBeChecked) {
+                $status = $statuses[$key] ?: null;
+                if ($chk->status !== $status) {
                     $chk->update([
-                        'is_checked' => $shouldBeChecked,
-                        'checked_by' => $shouldBeChecked ? $userId : null,
-                        'checked_at' => $shouldBeChecked ? now() : null,
+                        'status' => $status,
+                        'is_checked' => $status === 'sesuai',
+                        'checked_by' => $status ? $userId : null,
+                        'checked_at' => $status ? now() : null,
                     ]);
                 }
             }
@@ -64,7 +79,7 @@ class ChecklistController extends Controller
 
         ActivityLog::record('perubahan_checklist', $spm, [
             'nomor' => $spm->nomor,
-            'checked_count' => count($checkedDocIds),
+            'checked_count' => count(array_filter($statuses, fn ($status) => $status === 'sesuai')),
             'catatan_pemeriksa' => $validated['catatan_pemeriksa'] ?? null,
         ]);
 

@@ -83,11 +83,19 @@ class Spm extends Model
      */
     public function getCheckedCountAttribute(): int
     {
+        $documentIds = $this->activeDocumentIds();
+
         if ($this->relationLoaded('checklists')) {
-            return $this->checklists->where('is_checked', true)->count();
+            return $this->checklists
+                ->whereIn('dokumen_wajib_id', $documentIds)
+                ->where('status', 'sesuai')
+                ->count();
         }
 
-        return $this->checklists()->where('is_checked', true)->count();
+        return $this->checklists()
+            ->whereIn('dokumen_wajib_id', $documentIds)
+            ->where('status', 'sesuai')
+            ->count();
     }
 
     /**
@@ -95,11 +103,19 @@ class Spm extends Model
      */
     public function getTotalDocsCountAttribute(): int
     {
-        if ($this->relationLoaded('akunBelanja') && $this->akunBelanja?->relationLoaded('dokumenWajibs')) {
-            return $this->akunBelanja->dokumenWajibs->where('is_active', true)->count();
+        $documentIds = $this->activeDocumentIds();
+
+        if ($this->relationLoaded('checklists')) {
+            return count(array_filter($documentIds, fn (int $id) => $this->checklists
+                ->firstWhere('dokumen_wajib_id', $id)?->status !== '-'));
         }
 
-        return $this->akunBelanja ? $this->akunBelanja->activeDokumenWajibs()->count() : 0;
+        $excludedCount = $this->checklists()
+            ->whereIn('dokumen_wajib_id', $documentIds)
+            ->where('status', '-')
+            ->count();
+
+        return count($documentIds) - $excludedCount;
     }
 
     /**
@@ -147,9 +163,24 @@ class Spm extends Model
                     'dokumen_wajib_id' => $doc->id,
                 ],
                 [
+                    'status' => null,
                     'is_checked' => false,
                 ]
             );
         }
+    }
+
+    /**
+     * @return array<int, int>
+     */
+    private function activeDocumentIds(): array
+    {
+        if ($this->relationLoaded('akunBelanja') && $this->akunBelanja?->relationLoaded('dokumenWajibs')) {
+            return $this->akunBelanja->dokumenWajibs
+                ->where('is_active', true)
+                ->modelKeys();
+        }
+
+        return $this->akunBelanja?->activeDokumenWajibs()->pluck('id')->all() ?? [];
     }
 }

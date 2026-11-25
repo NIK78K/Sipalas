@@ -9,6 +9,7 @@ use App\Models\Spm;
 use App\Models\SpmCatatan;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class SpmTransactionTest extends TestCase
@@ -60,7 +61,11 @@ class SpmTransactionTest extends TestCase
 
         // Can view
         $this->actingAs($user)->get(route('spm.index'))->assertOk();
-        $this->actingAs($user)->get(route('spm.show', $spm))->assertOk();
+        $this->actingAs($user)->get(route('spm.show', $spm))
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Spm/Show')
+                ->has('checklists', 2)
+            );
 
         // Cannot create
         $this->actingAs($user)->get(route('spm.create'))->assertForbidden();
@@ -164,7 +169,10 @@ class SpmTransactionTest extends TestCase
         // 1. Check one document
         $response = $this->actingAs($admin)->post(route('spm.checklist.update', $spm), [
             'version' => 1,
-            'checked_ids' => [$this->doc1->id],
+            'statuses' => [
+                $this->doc1->id => 'sesuai',
+                $this->doc2->id => null,
+            ],
             'catatan_pemeriksa' => 'Kurang SPM fisik',
         ]);
 
@@ -178,7 +186,10 @@ class SpmTransactionTest extends TestCase
         // 2. Conflict: submit with stale version (version 1 while current is 2)
         $conflictResponse = $this->actingAs($admin)->post(route('spm.checklist.update', $spm), [
             'version' => 1,
-            'checked_ids' => [$this->doc1->id, $this->doc2->id],
+            'statuses' => [
+                $this->doc1->id => 'sesuai',
+                $this->doc2->id => 'sesuai',
+            ],
         ]);
         $conflictResponse->assertSessionHasErrors('version');
         $this->assertEquals(2, $spm->fresh()->version);
@@ -186,7 +197,10 @@ class SpmTransactionTest extends TestCase
         // 3. Complete checklist with correct version 2
         $completeResponse = $this->actingAs($admin)->post(route('spm.checklist.update', $spm), [
             'version' => 2,
-            'checked_ids' => [$this->doc1->id, $this->doc2->id],
+            'statuses' => [
+                $this->doc1->id => 'sesuai',
+                $this->doc2->id => 'sesuai',
+            ],
             'catatan_pemeriksa' => 'Lengkap dan sah',
         ]);
         $completeResponse->assertSessionHasNoErrors();
@@ -197,6 +211,76 @@ class SpmTransactionTest extends TestCase
         $this->assertTrue($spm->is_lengkap);
         $this->assertEquals('Lengkap', $spm->status_label);
         $this->assertEquals('Lengkap dan sah', $spm->catatan_pemeriksa);
+    }
+
+    public function test_checklist_statuses_and_not_applicable_progress(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $spm = Spm::create([
+            'satker_id' => $this->satker->id,
+            'akun_belanja_id' => $this->akun->id,
+            'tahun' => 2026,
+            'bulan' => 1,
+            'nomor' => '00002A',
+            'jenis' => 'LS',
+            'nilai_transaksi' => 1000000,
+        ]);
+        $spm->syncChecklists();
+
+        $this->assertEquals(2, $spm->total_docs_count);
+        $this->assertDatabaseHas('spm_checklists', [
+            'spm_id' => $spm->id,
+            'dokumen_wajib_id' => $this->doc1->id,
+            'status' => null,
+        ]);
+
+        $this->actingAs($admin)->post(route('spm.checklist.update', $spm), [
+            'version' => 1,
+            'statuses' => [
+                $this->doc1->id => '-',
+                $this->doc2->id => 'tidak_sesuai',
+            ],
+        ])->assertSessionHasNoErrors();
+
+        $spm->refresh();
+        $this->assertEquals(1, $spm->total_docs_count);
+        $this->assertEquals(0, $spm->checked_count);
+        $this->assertFalse($spm->is_lengkap);
+
+        $this->actingAs($admin)->post(route('spm.checklist.update', $spm), [
+            'version' => 2,
+            'statuses' => [
+                $this->doc2->id => 'sesuai',
+            ],
+        ])->assertSessionHasNoErrors();
+
+        $this->assertTrue($spm->fresh()->is_lengkap);
+    }
+
+    public function test_checklist_rejects_unknown_status_values(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $spm = Spm::create([
+            'satker_id' => $this->satker->id,
+            'akun_belanja_id' => $this->akun->id,
+            'tahun' => 2026,
+            'bulan' => 1,
+            'nomor' => '00003A',
+            'jenis' => 'LS',
+            'nilai_transaksi' => 1000000,
+        ]);
+        $spm->syncChecklists();
+
+        $this->actingAs($admin)->post(route('spm.checklist.update', $spm), [
+            'version' => 1,
+            'statuses' => [$this->doc1->id => 'invalid'],
+        ])->assertSessionHasErrors("statuses.{$this->doc1->id}");
+
+        $this->assertDatabaseHas('spm_checklists', [
+            'spm_id' => $spm->id,
+            'dokumen_wajib_id' => $this->doc1->id,
+            'status' => null,
+        ]);
     }
 
     public function test_additional_notes_creation_and_15_minute_deletion_rule(): void

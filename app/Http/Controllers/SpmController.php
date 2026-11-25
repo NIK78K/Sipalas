@@ -55,7 +55,7 @@ class SpmController extends Controller
             if ($status === 'lengkap') {
                 // SPM where checked count == total active docs count
                 $query->whereHas('checklists', function ($q) {
-                    $q->where('is_checked', true);
+                    $q->where('status', 'sesuai');
                 });
             }
         }
@@ -146,6 +146,7 @@ class SpmController extends Controller
 
         // Auto-sync if new documents exist
         $spm->syncChecklists();
+        $spm->load('checklists.dokumenWajib');
 
         // Sort checklists by document order
         $checklists = $spm->checklists->sortBy(function ($item) {

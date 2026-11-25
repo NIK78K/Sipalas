@@ -222,6 +222,7 @@ class CatatanPemeriksaParser
                                         'dokumen_wajib_id' => $doc->id,
                                     ],
                                     [
+                                        'status' => $isChecked ? 'sesuai' : null,
                                         'is_checked' => $isChecked,
                                         'checked_at' => $isChecked ? now() : null,
                                     ]

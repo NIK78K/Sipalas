@@ -74,7 +74,7 @@ class ActivityLogTest extends TestCase
 
         $this->actingAs($admin)->post(route('spm.checklist.update', $spm), [
             'version' => 1,
-            'checked_ids' => [$doc->id],
+            'statuses' => [$doc->id => 'sesuai'],
             'catatan_pemeriksa' => 'Catatan checklist test',
         ]);
 

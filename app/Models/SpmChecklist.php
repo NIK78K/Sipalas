@@ -13,6 +13,7 @@ class SpmChecklist extends Model
     protected $fillable = [
         'spm_id',
         'dokumen_wajib_id',
+        'status',
         'is_checked',
         'checked_by',
         'checked_at',
