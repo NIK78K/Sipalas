@@ -141,7 +141,7 @@ class RekapKelengkapanService
     public function getAkunDetail(AkunBelanja $akun, ?int $satkerId = null, ?int $tahun = null, ?int $bulan = null): array
     {
         $spmQuery = Spm::where('akun_belanja_id', $akun->id)
-            ->with(['satker', 'checklists']);
+            ->with(['satker', 'checklists', 'catatans.user', 'catatans.replies.user']);
 
         if ($satkerId) {
             $spmQuery->where('satker_id', $satkerId);
@@ -198,6 +198,17 @@ class RekapKelengkapanService
                     'jenis' => $spm->jenis,
                     'nilai_transaksi' => $spm->nilai_transaksi,
                     'uraian_belanja' => $spm->catatan_pemeriksa,
+                    'catatan_pengawas' => $spm->catatans
+                        ->filter(fn ($catatan) => in_array($catatan->user?->role, ['admin', 'operator'], true))
+                        ->pluck('isi')
+                        ->values()
+                        ->all(),
+                    'balasan_catatan' => $spm->catatans
+                        ->flatMap(fn ($catatan) => $catatan->replies
+                            ->filter(fn ($reply) => $reply->user?->role === 'user')
+                            ->pluck('isi'))
+                        ->values()
+                        ->all(),
                     'link_bukti' => $spm->link_bukti,
                     'is_checked' => $isChecked,
                     'document_statuses' => $docs->mapWithKeys(function (DokumenWajib $item) use ($spm) {

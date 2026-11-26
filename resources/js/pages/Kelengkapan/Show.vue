@@ -25,6 +25,8 @@ interface MissingSpm {
 
 interface DetailSpm extends MissingSpm {
     uraian_belanja: string | null;
+    catatan_pengawas: string[];
+    balasan_catatan: string[];
     link_bukti: string | null;
     is_checked: boolean;
     document_statuses: Record<number, 'sesuai' | 'tidak_sesuai' | '-' | null>;
@@ -176,12 +178,14 @@ function formatRupiah(val: number): string {
                             >
                                 {{ document.nama }}
                             </th>
+                            <th class="min-w-64 px-3 py-3">Catatan Pengawas</th>
+                            <th class="min-w-64 px-3 py-3">Balasan Catatan</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y">
                         <tr v-if="detailSpms.length === 0">
                             <td
-                                :colspan="6 + documents.length"
+                                :colspan="8 + documents.length"
                                 class="px-4 py-8 text-center text-muted-foreground"
                             >
                                 Belum ada SPM untuk filter ini.
@@ -278,6 +282,38 @@ function formatRupiah(val: number): string {
                                                 : 'Belum Dinilai'
                                     }}
                                 </Badge>
+                            </td>
+                            <td class="min-w-64 px-3 py-3 align-top">
+                                <ul
+                                    v-if="mspm.catatan_pengawas.length"
+                                    class="space-y-1 whitespace-pre-line"
+                                >
+                                    <li
+                                        v-for="(catatan, index) in mspm.catatan_pengawas"
+                                        :key="index"
+                                    >
+                                        {{ catatan }}
+                                    </li>
+                                </ul>
+                                <span v-else class="text-muted-foreground"
+                                    >-</span
+                                >
+                            </td>
+                            <td class="min-w-64 px-3 py-3 align-top">
+                                <ul
+                                    v-if="mspm.balasan_catatan.length"
+                                    class="space-y-1 whitespace-pre-line"
+                                >
+                                    <li
+                                        v-for="(balasan, index) in mspm.balasan_catatan"
+                                        :key="index"
+                                    >
+                                        {{ balasan }}
+                                    </li>
+                                </ul>
+                                <span v-else class="text-muted-foreground"
+                                    >-</span
+                                >
                             </td>
                         </tr>
                     </tbody>

@@ -116,6 +116,7 @@ class RekapAndDashboardTest extends TestCase
             'nomor' => '00001A',
             'jenis' => 'LS',
             'nilai_transaksi' => 1000000,
+            'catatan_pemeriksa' => 'Dokumen telah diperiksa.',
         ]);
         $spm1->syncChecklists();
         $spm1->checklists()->update(['status' => 'sesuai', 'is_checked' => true]);
@@ -132,6 +133,21 @@ class RekapAndDashboardTest extends TestCase
         ]);
         $spm2->syncChecklists();
         $spm2->checklists()->where('dokumen_wajib_id', $this->doc1->id)->update(['status' => 'sesuai', 'is_checked' => true]);
+        $admin = User::factory()->create(['role' => 'admin']);
+        $catatan = $spm1->catatans()->create([
+            'user_id' => $admin->id,
+            'isi' => 'Periksa kelengkapan dokumen.',
+        ]);
+        $catatan->replies()->create([
+            'spm_id' => $spm1->id,
+            'user_id' => $user->id,
+            'isi' => 'Sudah ditindaklanjuti.',
+        ]);
+        $catatan->replies()->create([
+            'spm_id' => $spm1->id,
+            'user_id' => $admin->id,
+            'isi' => 'Catatan admin lanjutan.',
+        ]);
 
         // 1. Index page
         $this->actingAs($user)->get(route('kelengkapan.index'))->assertOk();
@@ -155,6 +171,12 @@ class RekapAndDashboardTest extends TestCase
         $this->assertEquals('00001A', $doc1Detail['detail_spms'][0]['nomor']);
         $this->assertTrue($doc1Detail['detail_spms'][0]['is_checked']);
         $this->assertSame('sesuai', $doc1Detail['detail_spms'][0]['document_statuses'][$this->doc1->id]);
+        $this->assertSame('Dokumen telah diperiksa.', $doc1Detail['detail_spms'][0]['uraian_belanja']);
+        $this->assertSame(
+            ['Periksa kelengkapan dokumen.'],
+            $doc1Detail['detail_spms'][0]['catatan_pengawas']
+        );
+        $this->assertSame(['Sudah ditindaklanjuti.'], $doc1Detail['detail_spms'][0]['balasan_catatan']);
 
         // doc2 (Undangan): fulfilled by SPM1 only (1/2 = 50%)
         $doc2Detail = $detail['documents']->firstWhere('id', $this->doc2->id);
